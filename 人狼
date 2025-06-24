@@ -1,0 +1,124 @@
+import React, { useState, useEffect } from 'react';
+
+function JinroGMTool() {
+  const [time, setTime] = useState(60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [newPlayer, setNewPlayer] = useState('');
+  const [coMemo, setCoMemo] = useState({});
+  const [votes, setVotes] = useState({});
+  const [bitten, setBitten] = useState([]);
+
+  useEffect(() => {
+    let timer;
+    if (isRunning && time > 0) {
+      timer = setInterval(() => setTime((prev) => prev - 1), 1000);
+    } else if (time === 0) {
+      setIsRunning(false);
+    }
+    return () => clearInterval(timer);
+  }, [isRunning, time]);
+
+  const formatTime = (sec) => `${Math.floor(sec / 60)}:${('0' + (sec % 60)).slice(-2)}`;
+
+  const addPlayer = () => {
+    if (newPlayer && !players.includes(newPlayer)) {
+      setPlayers([...players, newPlayer]);
+      setNewPlayer('');
+    }
+  };
+
+  const handleVote = (from, to) => {
+    setVotes({ ...votes, [from]: to });
+  };
+
+  const handleBitten = (name) => {
+    setBitten([...bitten, name]);
+  };
+
+  return (
+    <div style={{ padding: '1rem' }}>
+      <h2>人狼GMツール</h2>
+
+      {/* タイマー */}
+      <div>
+        <h3>タイマー: {formatTime(time)}</h3>
+        <button onClick={() => setTime(60)}>1分</button>
+        <button onClick={() => setTime(300)}>5分</button>
+        <button onClick={() => setTime(600)}>10分</button>
+        <button onClick={() => setIsRunning(true)}>スタート</button>
+        <button onClick={() => setIsRunning(false)}>停止</button>
+        <button onClick={() => setTime(0)}>リセット</button>
+      </div>
+
+      {/* プレイヤー管理 */}
+      <div>
+        <h3>プレイヤー管理</h3>
+        <input
+          type="text"
+          value={newPlayer}
+          onChange={(e) => setNewPlayer(e.target.value)}
+          placeholder="名前を入力"
+        />
+        <button onClick={addPlayer}>追加</button>
+        <ul>
+          {players.map((p) => (
+            <li key={p}>
+              {p} <button onClick={() => setPlayers(players.filter((name) => name !== p))}>削除</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* COメモ */}
+      <div>
+        <h3>COメモ</h3>
+        {players.map((p) => (
+          <div key={p}>
+            {p}:
+            <input
+              type="text"
+              placeholder="役職など"
+              value={coMemo[p] || ''}
+              onChange={(e) => setCoMemo({ ...coMemo, [p]: e.target.value })}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 投票管理 */}
+      <div>
+        <h3>投票管理</h3>
+        {players.map((from) => (
+          <div key={from}>
+            {from} →
+            <select
+              value={votes[from] || ''}
+              onChange={(e) => handleVote(from, e.target.value)}
+            >
+              <option value="">選択</option>
+              {players.filter((p) => p !== from).map((to) => (
+                <option key={to} value={to}>{to}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      {/* 噛まれ管理 */}
+      <div>
+        <h3>噛まれた人</h3>
+        {players.map((p) => (
+          <button key={p} onClick={() => handleBitten(p)}>{p}</button>
+        ))}
+        <ul>
+          {bitten.map((b, idx) => (
+            <li key={idx}>{b}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default JinroGMTool;
